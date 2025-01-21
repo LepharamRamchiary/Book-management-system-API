@@ -38,14 +38,13 @@ const addBook = asyncHandler(async (req, res) => {
   }
 
   const imageLocalPath = req.files?.image[0]?.path;
-  
 
   if (!imageLocalPath) {
     throw new ApiError(400, "Image file is required");
   }
 
   const imageCloudinary = await uploadOnCloudinary(imageLocalPath);
-//   console.log("Cloudinary upload response:", imageCloudinary);
+  //   console.log("Cloudinary upload response:", imageCloudinary);
 
   const book = await Book.create({
     title,
@@ -64,4 +63,31 @@ const addBook = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, book, "Book add sucessfully"));
 });
 
-export { addBook };
+const getAllBooks = asyncHandler(async (req, res) => {
+  const { page = 1, limit = 10 } = req.query;
+  try {
+    const books = await Book.find()
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec();
+    const count = await Book.countDocuments();
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+          total: count,
+          pages: Math.ceil(count / limit),
+          currentPage: parseInt(page, 10),
+          books,
+        },
+        "Books fetched successfully"
+      )
+    );
+  } catch (error) {
+    console.error("Error fetching books:", error);
+    throw new ApiError(500, "Failed to fetch books");
+  }
+});
+
+export { addBook, getAllBooks };

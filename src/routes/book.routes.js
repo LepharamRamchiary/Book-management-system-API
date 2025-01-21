@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { upload } from "../middlewares/multer.middleware.js";
-import { addBook } from "../controllers/book.controller.js";
+import { addBook, getAllBooks } from "../controllers/book.controller.js";
 
 const router = Router();
 
@@ -13,5 +13,7 @@ router.route("/add-book").post(
   ]),
   addBook
 );
+
+router.route("/get-all-book").get(getAllBooks);
 
 export default router;
