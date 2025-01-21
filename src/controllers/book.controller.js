@@ -112,4 +112,62 @@ const getBookById = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Failed to fetch book");
   }
 });
-export { addBook, getAllBooks, getBookById };
+
+const updateBook = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const {
+    title,
+    author,
+    isbn,
+    price,
+    quantity,
+    publishedDate,
+    genre,
+    description,
+  } = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new ApiError(400, "Invalid book ID");
+  }
+
+  const book = await Book.findById(id);
+  if (!book) {
+    throw new ApiError(404, "Book not found");
+  }
+
+  let updatedImageUrl = book.image; 
+  if (req.files?.image?.[0]?.path) {
+    const imageLocalPath = req.files.image[0].path;
+    
+    if (book.image) {
+      const publicId = book.image.split("/").pop().split(".")[0]; 
+      await deleteFromCloudinary(publicId);
+    }
+
+    const imageCloudinary = await uploadOnCloudinary(imageLocalPath);
+    updatedImageUrl = imageCloudinary.url;
+  }
+
+  const updatedBook = await Book.findByIdAndUpdate(
+    id,
+    {
+      title,
+      author,
+      isbn,
+      price,
+      quantity,
+      publishedDate,
+      genre,
+      description,
+      image: updatedImageUrl,
+      updatedAt: Date.now(),
+    },
+    { new: true, runValidators: true }
+  );
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedBook, "Book updated successfully"));
+});
+
+export { addBook, getAllBooks, getBookById, updateBook };
