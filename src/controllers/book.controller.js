@@ -170,7 +170,7 @@ const updateBook = asyncHandler(async (req, res) => {
 });
 
 const deleteBook = asyncHandler(async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params; 
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new ApiError(400, "Invalid book ID");
@@ -188,7 +188,7 @@ const deleteBook = asyncHandler(async (req, res) => {
 });
 
 const searchBook = asyncHandler(async (req, res) => {
-  const { query } = req.query;
+    const { query } = req.query;
 
   if (!query) {
     throw new ApiError(400, "Search query is required");
