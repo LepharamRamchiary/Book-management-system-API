@@ -97,7 +97,6 @@ const getBookById = asyncHandler(async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new ApiError(400, "Invalid book ID");
     }
-
     const book = await Book.findById(id);
 
     if (!book) {
@@ -135,12 +134,12 @@ const updateBook = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Book not found");
   }
 
-  let updatedImageUrl = book.image; 
+  let updatedImageUrl = book.image;
   if (req.files?.image?.[0]?.path) {
     const imageLocalPath = req.files.image[0].path;
-    
+
     if (book.image) {
-      const publicId = book.image.split("/").pop().split(".")[0]; 
+      const publicId = book.image.split("/").pop().split(".")[0];
       await deleteFromCloudinary(publicId);
     }
 
@@ -170,4 +169,51 @@ const updateBook = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, updatedBook, "Book updated successfully"));
 });
 
-export { addBook, getAllBooks, getBookById, updateBook };
+const deleteBook = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new ApiError(400, "Invalid book ID");
+  }
+
+  const deletedBook = await Book.findByIdAndDelete(id);
+
+  if (!deletedBook) {
+    throw new ApiError(404, "Book not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Book deleted successfully"));
+});
+
+const searchBook = asyncHandler(async (req, res) => {
+  const { query } = req.query;
+
+  if (!query) {
+    throw new ApiError(400, "Search query is required");
+  }
+
+  try {
+    const books = await Book.find({
+      $or: [
+        { title: { $regex: query, $options: "i" } },
+        { author: { $regex: query, $options: "i" } },
+        { genre: { $regex: query, $options: "i" } },
+      ],
+    });
+
+    return res.json(new ApiResponse(200, books, "Books fetched successfully"));
+  } catch (error) {
+    throw new ApiError(500, "Error fetching books");
+  }
+});
+
+export {
+  addBook,
+  getAllBooks,
+  getBookById,
+  updateBook,
+  deleteBook,
+  searchBook,
+};

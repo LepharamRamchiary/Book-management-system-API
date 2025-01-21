@@ -4,7 +4,9 @@ import {
   addBook,
   getAllBooks,
   getBookById,
-  updateBook
+  updateBook,
+  deleteBook,
+  searchBook
 } from "../controllers/book.controller.js";
 
 const router = Router();
@@ -19,8 +21,6 @@ router.route("/add-book").post(
   addBook
 );
 
-router.route("/get-all-book").get(getAllBooks);
-router.route("/get-book-by-id/:id").get(getBookById);
 router.route("/update/:id").put(
   upload.fields([
     {
@@ -30,5 +30,10 @@ router.route("/update/:id").put(
   ]),
   updateBook
 );
+
+router.route("/get-all-book").get(getAllBooks);
+router.route("/get-book-by-id/:id").get(getBookById);
+router.route("/delete/:id").delete(deleteBook);
+router.route("/search").get(searchBook)
 
 export default router;
