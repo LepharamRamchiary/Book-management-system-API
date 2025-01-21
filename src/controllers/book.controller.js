@@ -85,9 +85,31 @@ const getAllBooks = asyncHandler(async (req, res) => {
       )
     );
   } catch (error) {
-    console.error("Error fetching books:", error);
+    console.log("error", error);
     throw new ApiError(500, "Failed to fetch books");
   }
 });
 
-export { addBook, getAllBooks };
+const getBookById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new ApiError(400, "Invalid book ID");
+    }
+
+    const book = await Book.findById(id);
+
+    if (!book) {
+      throw new ApiError(404, "Book not found");
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, book, "Book fetched successfully"));
+  } catch (error) {
+    console.log("Error fetching book by id", error);
+    throw new ApiError(500, "Failed to fetch book");
+  }
+});
+export { addBook, getAllBooks, getBookById };
