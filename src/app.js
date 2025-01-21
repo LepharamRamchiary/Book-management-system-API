@@ -18,9 +18,11 @@ app.use(express.static("public"))
 app.use(cookieParser())
 
 // routes import
+import bookRouter from "./routes/book.routes.js"
 
 
 // routes declaration
+app.use("/api/books", bookRouter)
 
 
 
