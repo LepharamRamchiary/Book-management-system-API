@@ -1,6 +1,7 @@
 import express from "express"
 import cookieParser from "cookie-parser"
 import cors from "cors"
+import swaggerSetup from './utils/swagger.js';
 
 const app = express()
 
@@ -23,6 +24,9 @@ import bookRouter from "./routes/book.routes.js"
 
 // routes declaration
 app.use("/api/books", bookRouter)
+
+// Swagger
+swaggerSetup(app);
 
 
 
