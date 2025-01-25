@@ -7,7 +7,7 @@ const swaggerDefinition = {
   info: {
     title: 'Book Management System API', 
     version: '1.0.0', 
-    description: 'This a simple Book management system API which follow CRUD operations and RESTful architecture.', 
+    description: 'A simple Book management system API which follow CRUD operations and RESTful architecture.', 
   },
   servers: [
     {

@@ -223,6 +223,7 @@
 
 import { Router } from "express";
 import { upload } from "../middlewares/multer.middleware.js";
+import { apiLimiter, strictLimiter } from "../middlewares/rateLimit.middleware.js";
 import {
   addBook,
   getAllBooks,
@@ -234,8 +235,9 @@ import {
 
 const router = Router();
 
-
+// Sensitive routes with stricter rate limits
 router.route("/add-book").post(
+  strictLimiter,
   upload.fields([
     {
       name: "image",
@@ -246,6 +248,7 @@ router.route("/add-book").post(
 );
 
 router.route("/update/:id").put(
+  strictLimiter,
   upload.fields([
     {
       name: "image",
@@ -254,11 +257,12 @@ router.route("/update/:id").put(
   ]),
   updateBook
 );
+router.route("/delete/:id").delete(strictLimiter, deleteBook);
 
-router.route("/get-all-book").get(getAllBooks);
 
-router.route("/get-book-by-id/:id").get(getBookById);
-router.route("/delete/:id").delete(deleteBook);
-router.route("/search").get(searchBook)
+// Public or less-sensitive routes
+router.route("/get-all-book").get( apiLimiter, getAllBooks);
+router.route("/get-book-by-id/:id").get( apiLimiter, getBookById);
+router.route("/search").get( apiLimiter, searchBook);
 
 export default router;
