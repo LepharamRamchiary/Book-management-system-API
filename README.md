@@ -46,3 +46,6 @@ CLOUDINARY_API_SECRET = "Your_Cloudinary_API_Secret"
 ```
 npm start
 ```
+
+### API Doc
+- The API documentation is provided using Swagger, and [Postman documentation](https://documenter.getpostman.com/view/26300273/2sAYQfEpMA) is also included for easy testing and integration
