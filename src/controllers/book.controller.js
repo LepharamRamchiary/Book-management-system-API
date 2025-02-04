@@ -6,7 +6,10 @@ import {
   uploadOnCloudinary,
   deleteFromCloudinary,
 } from "../utils/cloudinary.js";
+import { cacheData, getCachedData, deleteCacheKey } from "../utils/redis.js";
 import mongoose from "mongoose";
+
+const CACHE_EXPIRATION = 2000;
 
 const addBook = asyncHandler(async (req, res) => {
   const {
@@ -58,6 +61,10 @@ const addBook = asyncHandler(async (req, res) => {
     image: imageCloudinary.url,
   });
 
+  // Invalidate book list cache
+  await deleteCacheKey("all_books");
+  await deleteCacheKey(`book_${book._id}`);
+
   return res
     .status(201)
     .json(new ApiResponse(201, book, "Book add sucessfully"));
@@ -65,6 +72,17 @@ const addBook = asyncHandler(async (req, res) => {
 
 const getAllBooks = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
+
+  // Create a unique cache key based on pagination
+  const cacheKey = `all_books_page_${page}_limit_${limit}`;
+
+  const cachedBooks = await getCachedData(cacheKey);
+  if (cachedBooks) {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, cachedBooks, "Books fetched from cache"));
+  }
+
   try {
     const books = await Book.find()
       .limit(limit * 1)
@@ -72,18 +90,19 @@ const getAllBooks = asyncHandler(async (req, res) => {
       .exec();
     const count = await Book.countDocuments();
 
-    return res.status(200).json(
-      new ApiResponse(
-        200,
-        {
-          total: count,
-          pages: Math.ceil(count / limit),
-          currentPage: parseInt(page, 10),
-          books,
-        },
-        "Books fetched successfully"
-      )
-    );
+    const responseData = {
+      total: count,
+      pages: Math.ceil(count / limit),
+      currentPage: parseInt(page, 10),
+      books,
+    };
+
+    // Cache the response
+    await cacheData(cacheKey, responseData, CACHE_EXPIRATION);
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, responseData, "Books fetched successfully"));
   } catch (error) {
     console.log("error", error);
     throw new ApiError(500, "Failed to fetch books");
@@ -92,6 +111,16 @@ const getAllBooks = asyncHandler(async (req, res) => {
 
 const getBookById = asyncHandler(async (req, res) => {
   const { id } = req.params;
+
+  const cacheKey = `book_${id}`;
+
+  // Try to get cached data
+  const cachedBook = await getCachedData(cacheKey);
+  if (cachedBook) {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, cachedBook, "Book fetched from cache"));
+  }
 
   try {
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -102,6 +131,9 @@ const getBookById = asyncHandler(async (req, res) => {
     if (!book) {
       throw new ApiError(404, "Book not found");
     }
+
+    // Cache the book
+    await cacheData(cacheKey, book, CACHE_EXPIRATION);
 
     return res
       .status(200)
@@ -164,13 +196,17 @@ const updateBook = asyncHandler(async (req, res) => {
     { new: true, runValidators: true }
   );
 
+  // Invalidate cache for this specific book and book list
+  await deleteCacheKey(`book_${id}`);
+  await deleteCacheKey("all_books");
+
   return res
     .status(200)
     .json(new ApiResponse(200, updatedBook, "Book updated successfully"));
 });
 
 const deleteBook = asyncHandler(async (req, res) => {
-  const { id } = req.params; 
+  const { id } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new ApiError(400, "Invalid book ID");
@@ -182,16 +218,30 @@ const deleteBook = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Book not found");
   }
 
+  // Invalidate cache for this specific book and book list
+  await deleteCacheKey(`book_${id}`);
+  await deleteCacheKey("all_books");
+
   return res
     .status(200)
     .json(new ApiResponse(200, {}, "Book deleted successfully"));
 });
 
 const searchBook = asyncHandler(async (req, res) => {
-    const { query } = req.query;
+  const { query } = req.query;
 
   if (!query) {
     throw new ApiError(400, "Search query is required");
+  }
+
+  // Create a unique cache key for the search query
+  const cacheKey = `search_${query}`;
+
+  // Try to get cached data
+  const cachedResults = await getCachedData(cacheKey);
+
+  if (cachedResults) {
+    return res.json(new ApiResponse(200, cachedResults, "Books fetched from cache"));
   }
 
   try {
@@ -202,6 +252,9 @@ const searchBook = asyncHandler(async (req, res) => {
         { genre: { $regex: query, $options: "i" } },
       ],
     });
+
+    // Cache search results
+    await cacheData(cacheKey, books, CACHE_EXPIRATION);
 
     return res.json(new ApiResponse(200, books, "Books fetched successfully"));
   } catch (error) {
