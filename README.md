@@ -23,6 +23,11 @@ MONGODB_URL = "Your_MongoDB_Atlas_URL"
 CLOUDINARY_CLOUD_NAME = "Your_Cloudinary_Cloud_Name"
 CLOUDINARY_API_KEY = "Your_Cloudinary_API_key"
 CLOUDINARY_API_SECRET = "Your_Cloudinary_API_Secret"
+
+For redis
+REDIS_HOST = "Your_Host"
+REDIS_PORT = "Your_Port"
+REDIS_PASSWORD = "Your Password"
 ```
 
 ## Dependencies
