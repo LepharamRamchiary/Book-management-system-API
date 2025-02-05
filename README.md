@@ -23,6 +23,11 @@ MONGODB_URL = "Your_MongoDB_Atlas_URL"
 CLOUDINARY_CLOUD_NAME = "Your_Cloudinary_Cloud_Name"
 CLOUDINARY_API_KEY = "Your_Cloudinary_API_key"
 CLOUDINARY_API_SECRET = "Your_Cloudinary_API_Secret"
+
+For redis
+REDIS_HOST = "Your_Host"
+REDIS_PORT = "Your_Port"
+REDIS_PASSWORD = "Your Password"
 ```
 
 ## Dependencies
@@ -34,8 +39,10 @@ CLOUDINARY_API_SECRET = "Your_Cloudinary_API_Secret"
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
+    "ioredis": "^5.4.2",
     "mongoose": "^8.9.5",
     "multer": "^1.4.5-lts.1",
+    "redis": "^4.7.0",
     "redis-server": "^1.2.2",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
