@@ -24,7 +24,7 @@ const addBook = asyncHandler(async (req, res) => {
   } = req.body;
 
   if (
-    [title, author, isbn, price, quantity].some((field) => field?.trim() === "")
+    [title, author, price, quantity].some((field) => field?.trim() === "")
   ) {
     throw new ApiError(
       400,

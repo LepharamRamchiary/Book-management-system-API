@@ -12,7 +12,7 @@ const bookSchema = new mongoose.Schema(
     },
     isbn: {
       type: String,
-      required: true,
+      // required: true,
       unique: true,
     },
     price: {
@@ -46,5 +46,27 @@ const bookSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Function to generate a random 13-digit ISBN number
+const generateRandomISBN = () => {
+  return `978${Math.floor(1000000000 + Math.random() * 9000000000)}`;
+};
+
+// Pre-save hook to generate a random ISBN if not provided
+bookSchema.pre("save", async function (next) {
+  if (!this.isbn) {
+    let newIsbn;
+    let existingBook;
+
+    // Ensure uniqueness
+    do {
+      newIsbn = generateRandomISBN();
+      existingBook = await mongoose.model("Book").findOne({ isbn: newIsbn });
+    } while (existingBook);
+
+    this.isbn = newIsbn;
+  }
+  next();
+});
 
 export const Book = mongoose.model("Book", bookSchema);
