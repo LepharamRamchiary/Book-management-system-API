@@ -23,9 +23,7 @@ const addBook = asyncHandler(async (req, res) => {
     description,
   } = req.body;
 
-  if (
-    [title, author, price, quantity].some((field) => field?.trim() === "")
-  ) {
+  if ([title, author, price, quantity].some((field) => field?.trim() === "")) {
     throw new ApiError(
       400,
       "The title, author, isbn, price, and quantity fields are required"
@@ -61,8 +59,18 @@ const addBook = asyncHandler(async (req, res) => {
     image: imageCloudinary.url,
   });
 
-  // Invalidate book list cache
-  await deleteCacheKey("all_books");
+  // Invalidate all cached book lists
+  let allKeys = await getCachedData("all_books_keys");
+  if (!allKeys || !Array.isArray(allKeys)) {
+    allKeys = [];
+  }
+
+  for (const key of allKeys) {
+    console.log(`Deleting cache key: ${key}`);
+    await deleteCacheKey(key);
+  }
+
+  // Also invalidate single book cache
   await deleteCacheKey(`book_${book._id}`);
 
   return res
@@ -73,7 +81,6 @@ const addBook = asyncHandler(async (req, res) => {
 const getAllBooks = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
 
-  // Create a unique cache key based on pagination
   const cacheKey = `all_books_page_${page}_limit_${limit}`;
 
   const cachedBooks = await getCachedData(cacheKey);
@@ -97,14 +104,26 @@ const getAllBooks = asyncHandler(async (req, res) => {
       books,
     };
 
+    // Store paginated cache key for future invalidation
+    let existingKeys = await getCachedData("all_books_keys");
+    if (!existingKeys || !Array.isArray(existingKeys)) {
+      existingKeys = [];
+    }
+
+    if (!existingKeys.includes(cacheKey)) {
+      existingKeys.push(cacheKey);
+      await cacheData("all_books_keys", existingKeys, CACHE_EXPIRATION);
+      console.log("Updated cache keys:", existingKeys);
+    }
+
     // Cache the response
+    console.log(`Storing data in cache: ${cacheKey}`);
     await cacheData(cacheKey, responseData, CACHE_EXPIRATION);
 
     return res
       .status(200)
       .json(new ApiResponse(200, responseData, "Books fetched successfully"));
   } catch (error) {
-    console.log("error", error);
     throw new ApiError(500, "Failed to fetch books");
   }
 });
@@ -196,9 +215,23 @@ const updateBook = asyncHandler(async (req, res) => {
     { new: true, runValidators: true }
   );
 
-  // Invalidate cache for this specific book and book list
+  // Invalidate cache for this specific book
+  console.log(`Deleting cache key: book_${id}`);
   await deleteCacheKey(`book_${id}`);
-  await deleteCacheKey("all_books");
+
+  // Get all cached book list keys
+  let allKeys = await getCachedData("all_books_keys");
+  if (!allKeys || !Array.isArray(allKeys)) {
+    allKeys = [];
+  }
+
+  console.log("Cached book list keys:", allKeys);
+
+  // Delete each paginated cache key
+  for (const key of allKeys) {
+    console.log(`Deleting cache key: ${key}`);
+    await deleteCacheKey(key);
+  }
 
   return res
     .status(200)
@@ -220,7 +253,17 @@ const deleteBook = asyncHandler(async (req, res) => {
 
   // Invalidate cache for this specific book and book list
   await deleteCacheKey(`book_${id}`);
-  await deleteCacheKey("all_books");
+
+  // Invalidate all cached book lists
+  let allKeys = await getCachedData("all_books_keys");
+  if (!allKeys || !Array.isArray(allKeys)) {
+    allKeys = [];
+  }
+
+  for (const key of allKeys) {
+    console.log(`Deleting cache key: ${key}`);
+    await deleteCacheKey(key);
+  }
 
   return res
     .status(200)
@@ -241,7 +284,9 @@ const searchBook = asyncHandler(async (req, res) => {
   const cachedResults = await getCachedData(cacheKey);
 
   if (cachedResults) {
-    return res.json(new ApiResponse(200, cachedResults, "Books fetched from cache"));
+    return res.json(
+      new ApiResponse(200, cachedResults, "Books fetched from cache")
+    );
   }
 
   try {
