@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true
+        required: [true, "Password is required"]
     },
     avatar: {
         type: String,
@@ -32,6 +32,10 @@ const userSchema = new mongoose.Schema({
     },
     refreshToken: {
         type: String
+    },
+    isAdmin: {
+        type: Boolean,
+        default: false,
     }
 }, { timestamps: true });
 
