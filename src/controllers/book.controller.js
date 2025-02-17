@@ -23,6 +23,12 @@ const addBook = asyncHandler(async (req, res) => {
     description,
   } = req.body;
 
+  const user = req.user;
+
+  if (!user?.isAdmin) {
+    throw new ApiError(403, "Access denied. Only admins can add Books");
+  }
+
   if ([title, author, price, quantity].some((field) => field?.trim() === "")) {
     throw new ApiError(
       400,
@@ -176,6 +182,12 @@ const updateBook = asyncHandler(async (req, res) => {
     description,
   } = req.body;
 
+  const user = req.user;
+
+  if(!user.isAdmin){
+    throw new ApiError(403, "Only admin can update the book")
+  }
+
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new ApiError(400, "Invalid book ID");
   }
@@ -240,6 +252,12 @@ const updateBook = asyncHandler(async (req, res) => {
 
 const deleteBook = asyncHandler(async (req, res) => {
   const { id } = req.params;
+
+  const user = req.user;
+
+  if(!user.isAdmin){
+    throw new ApiError(403,"Only admin can delete the book")
+  }
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new ApiError(400, "Invalid book ID");
@@ -309,9 +327,9 @@ const searchBook = asyncHandler(async (req, res) => {
 
 export {
   addBook,
+  deleteBook,
+  updateBook,
   getAllBooks,
   getBookById,
-  updateBook,
-  deleteBook,
   searchBook,
 };
