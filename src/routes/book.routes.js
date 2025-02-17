@@ -69,11 +69,11 @@
  *     responses:
  *       201:
  *         description: Book created successfully
- *       400: 
+ *       400:
  *         description: Field are required
  *       409:
  *         description: Book with title or isbn already exists
- * 
+ *
  */
 
 /**
@@ -120,7 +120,7 @@
  *         description: Book not found
  *       500:
  *         description: Failed to fetch book
- * 
+ *
  */
 
 /**
@@ -220,20 +220,26 @@
  *         description: Server error
  */
 
-
 import { Router } from "express";
 import { upload } from "../middlewares/multer.middleware.js";
-import { apiLimiter, strictLimiter } from "../middlewares/rateLimit.middleware.js";
+import {
+  apiLimiter,
+  strictLimiter,
+} from "../middlewares/rateLimit.middleware.js";
 import {
   addBook,
   getAllBooks,
   getBookById,
   updateBook,
   deleteBook,
-  searchBook
+  searchBook,
 } from "../controllers/book.controller.js";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = Router();
+
+// Applying verifyJwt for all routes
+router.use(verifyJWT);
 
 // Sensitive routes with stricter rate limits
 router.route("/add-book").post(
@@ -259,10 +265,9 @@ router.route("/update/:id").put(
 );
 router.route("/delete/:id").delete(strictLimiter, deleteBook);
 
-
 // Public or less-sensitive routes
-router.route("/get-all-book").get( apiLimiter, getAllBooks);
-router.route("/get-book-by-id/:id").get( apiLimiter, getBookById);
-router.route("/search").get( apiLimiter, searchBook);
+router.route("/get-all-book").get(apiLimiter, getAllBooks);
+router.route("/get-book-by-id/:id").get(apiLimiter, getBookById);
+router.route("/search").get(apiLimiter, searchBook);
 
 export default router;
