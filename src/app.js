@@ -23,10 +23,12 @@ app.use(cookieParser());
 // routes import
 import bookRouter from "./routes/book.routes.js";
 import userRouter from "./routes/user.routes.js";
+import commentRouter from "./routes/comment.routes.js";
 
 // routes declaration
 app.use("/api/books", bookRouter);
 app.use("/api/users", userRouter);
+app.use("/api/comments", commentRouter);
 
 // Swagger
 swaggerSetup(app);
