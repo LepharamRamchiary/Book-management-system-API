@@ -7,6 +7,7 @@ import {
   changePassword,
   forgotPassword,
   resetPassword,
+  getCurrentUser
 } from "../controllers/user.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
@@ -27,5 +28,6 @@ router.route("/reset-password/:token").post(resetPassword);
 router.route("/login").post(login);
 router.route("/logout").post(verifyJWT, logout);
 router.route("/changed-password").post(verifyJWT, changePassword);
+router.route("/current-user").post(verifyJWT, getCurrentUser);
 
 export default router;
