@@ -208,13 +208,13 @@ const forgotPassword = asyncHandler(async (req, res) => {
     });
 
     console.log("email sent to user");
-    
+
     return res
       .status(200)
       .json(
         new ApiResponse(
           200,
-          {resetToken: resetToken},
+          { resetToken: resetToken },
           "Password reset email sent successfully. Please check your email."
         )
       );
@@ -237,7 +237,7 @@ const resetPassword = asyncHandler(async (req, res) => {
   const { token } = req.params;
 
   // console.log(token);
-  
+
   const { password } = req.body;
 
   if (!password) {
@@ -271,16 +271,53 @@ const resetPassword = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(
-      new ApiResponse(200, {}, "Password has been reset successfully")
-    );
+    .json(new ApiResponse(200, {}, "Password has been reset successfully"));
 });
 
 const getCurrentUser = asyncHandler(async (req, res) => {
   return res
+    .status(200)
+    .json(new ApiResponse(200, req.user, "Current user fetch successfully"));
+});
+
+const getAllUsers = asyncHandler(async (req, res) => {
+  const { page = 1, limit = 10 } = req.query;
+
+  const user = req.user
+
+  if(!user?.isAdmin){
+    throw new ApiError(403, "Only admin can access this route")
+  }
+
+  try {
+    const users = await User.find()
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec();
+    const count = await User.countDocuments();
+
+    const responseData = {
+      total: count,
+      pages: Math.ceil(count / limit),
+      currentPage: parseInt(page, 10),
+      users,
+    };
+
+    return res
       .status(200)
-      .json(new ApiResponse(200, req.user, "Current user fetch successfully"))
-})
+      .json(new ApiResponse(200, responseData, "Users fetched successfully"));
+  } catch (error) {
+    throw new ApiError(500, "Something went wrong while fetching users");
+  }
+});
 
-
-export { registerUser, login, logout, changePassword, forgotPassword, resetPassword, getCurrentUser };
+export {
+  registerUser,
+  login,
+  logout,
+  changePassword,
+  forgotPassword,
+  resetPassword,
+  getCurrentUser,
+  getAllUsers,
+};
