@@ -8,6 +8,8 @@ import {
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
+import { sendEmail } from "../utils/nodemailer.js";
+import crypto from "crypto";
 
 // generate access and referesh token
 const generateAccessTokenAndRefereshToken = async (userId) => {
@@ -164,4 +166,115 @@ const changePassword = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Password changed successfully"));
 });
 
-export { registerUser, login, logout, changePassword };
+// Forgot Password - Send reset email
+const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    throw new ApiError(400, "Email is required");
+  }
+
+  // console.log(await User.findOne({ email }));
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw new ApiError(404, "User not found with this email");
+  }
+
+  // Generate reset token
+  const resetToken = user.getResetPasswordToken();
+
+  // Save the user to persist resetPasswordToken and resetPasswordExpire
+  await user.save({ validateBeforeSave: false });
+
+  // Create reset URL
+  const resetUrl = `${req.protocol}://${req.get(
+    "host"
+  )}/api/users/reset-password/${resetToken}`;
+
+  // Create message for email
+  const message = `
+    <p>You requested to reset your password. Please use the link below to reset your password:</p>
+    <a href="${resetUrl}" target="_blank">Reset Password</a>
+    <p>If you didn't request this, you can safely ignore this email.</p>
+    <p>This link is valid for 10 minutes only.</p>
+  `;
+
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: "Password Reset Request",
+      message,
+    });
+
+    console.log("email sent to user");
+    
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          {resetToken: resetToken},
+          "Password reset email sent successfully. Please check your email."
+        )
+      );
+  } catch (error) {
+    // console.error("Email sending error:", error);
+    // If there's an error sending email, reset the fields
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    throw new ApiError(
+      500,
+      "Failed to send password reset email. Please try again later."
+    );
+  }
+});
+
+// Reset Password
+const resetPassword = asyncHandler(async (req, res) => {
+  const { token } = req.params;
+
+  // console.log(token);
+  
+  const { password } = req.body;
+
+  if (!password) {
+    throw new ApiError(400, "Password is required");
+  }
+
+  // Hash the token
+  const resetPasswordToken = crypto
+    .createHash("sha256")
+    .update(token)
+    .digest("hex");
+
+  const user = await User.findOne({
+    resetPasswordToken,
+    resetPasswordExpire: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    throw new ApiError(
+      400,
+      "Password reset token is invalid or has expired. Please request a new one."
+    );
+  }
+
+  // Set new password
+  user.password = password;
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpire = undefined;
+
+  await user.save();
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, {}, "Password has been reset successfully")
+    );
+});
+
+
+export { registerUser, login, logout, changePassword, forgotPassword, resetPassword };
