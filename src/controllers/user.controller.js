@@ -327,7 +327,7 @@ const updateUserDetails = asyncHandler(async (req, res) => {
     req.user._id,
     { $set: updateData },
     { new: true, runValidators: true }
-  );
+  ).select("-password");
 
   if (!updatedUser) {
     throw new ApiError(404, "User not found");
@@ -337,6 +337,49 @@ const updateUserDetails = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(200, updatedUser, "User details updated successfully")
     );
+});
+
+const updateUserAvatar = asyncHandler(async (req, res) => {
+  const avatarLocalPath = req.file?.path;
+  console.log(avatarLocalPath);
+
+  if (!avatarLocalPath) {
+    throw new ApiError(400, "Avatar file is missing");
+  }
+
+  // retrive the current user to get the old avater url
+  const user = await User.findById(req.user?._id);
+  console.log(user);
+  console.log(user?.avatar);
+
+  // delete old avater from cloudinary
+  if (user?.avatar) {
+    await deleteFromCloudinary(user?.avatar);
+  }
+
+  //  uploading avata file in cloudinry
+  const avatar = await uploadOnCloudinary(avatarLocalPath);
+
+  if (!avatar.url) {
+    throw new ApiError(400, "Error while uploading on avatar");
+  }
+
+  // update
+  const updateUser = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        avatar: avatar.url,
+      },
+    },
+    {
+      new: true,
+    }
+  ).select("-password");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updateUser, "Avatar updated sucessfully"));
 });
 
 export {
@@ -349,4 +392,5 @@ export {
   getCurrentUser,
   getAllUsers,
   updateUserDetails,
+  updateUserAvatar,
 };
