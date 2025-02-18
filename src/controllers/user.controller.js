@@ -283,10 +283,10 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 const getAllUsers = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
 
-  const user = req.user
+  const user = req.user;
 
-  if(!user?.isAdmin){
-    throw new ApiError(403, "Only admin can access this route")
+  if (!user?.isAdmin) {
+    throw new ApiError(403, "Only admin can access this route");
   }
 
   try {
@@ -311,6 +311,34 @@ const getAllUsers = asyncHandler(async (req, res) => {
   }
 });
 
+const updateUserDetails = asyncHandler(async (req, res) => {
+  const { fullname, email, username } = req.body;
+
+  if (!fullname && !email && !username) {
+    throw new ApiError(400, "At least one field is required for update");
+  }
+
+  const updateData = {};
+  if (fullname) updateData.fullname = fullname;
+  if (email) updateData.email = email;
+  if (username) updateData.username = username;
+
+  const updatedUser = await User.findByIdAndUpdate(
+    req.user._id,
+    { $set: updateData },
+    { new: true, runValidators: true }
+  );
+
+  if (!updatedUser) {
+    throw new ApiError(404, "User not found");
+  }
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, updatedUser, "User details updated successfully")
+    );
+});
+
 export {
   registerUser,
   login,
@@ -320,4 +348,5 @@ export {
   resetPassword,
   getCurrentUser,
   getAllUsers,
+  updateUserDetails,
 };

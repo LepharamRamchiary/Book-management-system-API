@@ -9,6 +9,7 @@ import {
   resetPassword,
   getCurrentUser,
   getAllUsers,
+  updateUserDetails
 } from "../controllers/user.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
@@ -31,5 +32,6 @@ router.route("/logout").post(verifyJWT, logout);
 router.route("/changed-password").post(verifyJWT, changePassword);
 router.route("/current-user").post(verifyJWT, getCurrentUser);
 router.route("/all-users").get(verifyJWT, getAllUsers);
+router.route("/update-account").patch(verifyJWT, updateUserDetails)
 
 export default router;
