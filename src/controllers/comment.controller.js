@@ -3,6 +3,7 @@ import { Comment } from "../models/comment.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { log } from "console";
 
 const addComment = asyncHandler(async (req, res) => {
   const { bookId } = req.params;
@@ -43,13 +44,19 @@ const getBookComments = asyncHandler(async (req, res) => {
         data: [{ $skip: (page - 1) * limit }, { $limit: parseInt(limit) }],
       },
     },
-    {
-      $unwind: "$metadata",
-    },
+    // {
+    //   $unwind: "$metadata",
+    // },
   ]);
+
+  const totalComments =
+    comments.length > 0 && comments[0].metadata.length > 0
+      ? comments[0].metadata[0].total
+      : 0;
 
   const response = {
     comments: comments.length > 0 ? comments[0].data : [],
+    total: totalComments,
     totalPages:
       comments.length > 0 ? Math.ceil(comments[0].metadata.total / limit) : 0,
     currentPage: parseInt(page),
@@ -66,8 +73,6 @@ const editComment = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
   console.log("user id:", userId.toString());
- 
-  
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new ApiError(400, "Invalid comment ID");
@@ -80,7 +85,7 @@ const editComment = asyncHandler(async (req, res) => {
   }
 
   console.log(comment.owner.toString());
-  
+
   if (comment.owner.toString() !== userId.toString()) {
     throw new ApiError(403, "You are not authorized to edit this comment");
   }
@@ -96,4 +101,34 @@ const editComment = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, updatedComment, "Comment update successfully"));
 });
 
-export { addComment, getBookComments, editComment };
+const deleteComment = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user._id.toString();
+  const user = req.user;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new ApiError(400, "Invalid comment ID");
+  }
+
+  const comment = await Comment.findById(id);
+
+  if (!comment) {
+    throw new ApiError(404, "Comment not found");
+  }
+
+  console.log("owner id", comment.owner.toString());
+  console.log("user id", userId);
+  console.log("admin", user.isAdmin);
+
+  if (!user.isAdmin && comment.owner.toString() !== userId.toString()) {
+    throw new ApiError(403, "You are not authorized to delete this comment");
+  }
+
+  const deleteComment = await Comment.findByIdAndDelete(id);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, deleteComment, "Comment deleted successfully"));
+});
+
+export { addComment, getBookComments, editComment, deleteComment };
