@@ -12,6 +12,14 @@ const commentSchema = new mongoose.Schema(
       ref: "Book",
       required: true,
     },
+    likes: {
+      type: Array,
+      default: [],
+    },
+    numberOfLikes: {
+      type: Number,
+      default: 0,
+    },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -21,6 +29,6 @@ const commentSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-commentSchema.plugin(mongooseAggregatePaginate)
+commentSchema.plugin(mongooseAggregatePaginate);
 
 export const Comment = mongoose.model("Comment", commentSchema);

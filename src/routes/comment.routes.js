@@ -5,6 +5,7 @@ import {
   editComment,
   getBookComments,
   deleteComment,
+  likeComment,
 } from "../controllers/comment.controller.js";
 
 const router = Router();
@@ -14,5 +15,6 @@ router.route("/add-comment/:bookId").post(addComment);
 router.route("/get-comment/:bookId").get(getBookComments);
 router.route("/edit-comment/:id").patch(editComment);
 router.route("/delete-comment/:id").delete(deleteComment);
+router.route("/like-comment/:cid").put(likeComment);
 
 export default router;
