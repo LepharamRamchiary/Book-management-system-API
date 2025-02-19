@@ -60,4 +60,40 @@ const getBookComments = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, response, "Comments retrieved successfully"));
 });
 
-export { addComment, getBookComments };
+const editComment = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { content } = req.body;
+  const userId = req.user._id;
+
+  console.log("user id:", userId.toString());
+ 
+  
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new ApiError(400, "Invalid comment ID");
+  }
+
+  const comment = await Comment.findById(id);
+
+  if (!comment) {
+    throw new ApiError(404, "Comment not found");
+  }
+
+  console.log(comment.owner.toString());
+  
+  if (comment.owner.toString() !== userId.toString()) {
+    throw new ApiError(403, "You are not authorized to edit this comment");
+  }
+
+  const updatedComment = await Comment.findByIdAndUpdate(
+    id,
+    { $set: { content } },
+    { new: true, runValidators: true }
+  );
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedComment, "Comment update successfully"));
+});
+
+export { addComment, getBookComments, editComment };
