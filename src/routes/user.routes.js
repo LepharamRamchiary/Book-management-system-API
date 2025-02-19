@@ -25,6 +25,7 @@
  *           format: binary
  */
 
+
 /**
  * @swagger
  * /api/users/register:
