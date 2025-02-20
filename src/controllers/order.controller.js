@@ -7,6 +7,11 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 const createOrder = asyncHandler(async (req, res) => {
+  const user = req.user;
+
+  if (user.isAdmin) {
+    throw new ApiError(403, "Admin can not access this route");
+  }
   try {
     const { books, deliveryAddress } = req.body;
     const userId = req.user._id;
@@ -86,21 +91,50 @@ const updatedPayment = asyncHandler(async (req, res) => {
 
 const getOrdersForSpecificUser = asyncHandler(async (req, res) => {
   const user = req.user;
+
+  if (user.isAdmin) {
+    throw new ApiError(403, "Admin can not access this route");
+  }
+
   const orders = await Order.find({ user: user }).populate(
     "books.book",
-    "title price"
+    "title genre author isbn"
   );
 
-  const count = await Order.countDocuments({ user: user});
+  const count = await Order.countDocuments({ user: user });
 
   const resData = {
     orders,
     total: count,
-  }
+  };
 
   return res
     .status(200)
     .json(new ApiResponse(200, resData, "Orders fetched successfully"));
 });
 
-export { createOrder, updatedPayment, getOrdersForSpecificUser };
+const getAllOrderByAdmin = asyncHandler(async (req, res) => {
+  const user = req.user;
+
+  if (!user.isAdmin) {
+    throw new ApiError(403, "Admin only access this route");
+  }
+
+  const orders = await Order.find().populate(
+    "books.book",
+    "title genre author isbn"
+  );
+
+  const count = await Order.countDocuments();
+
+  const resData = {
+    orders,
+    total: count,
+  };
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, resData, "Orders fetched successfully"));
+});
+
+export { createOrder, updatedPayment, getOrdersForSpecificUser, getAllOrderByAdmin };

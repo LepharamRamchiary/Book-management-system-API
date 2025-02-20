@@ -71,7 +71,7 @@ const editComment = asyncHandler(async (req, res) => {
   const { content } = req.body;
   const userId = req.user._id;
 
-  console.log("user id:", userId.toString());
+  // console.log("user id:", userId.toString());
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new ApiError(400, "Invalid comment ID");
