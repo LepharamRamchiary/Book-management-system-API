@@ -5,6 +5,7 @@ import {
   updatedPayment,
   getOrdersForSpecificUser,
   getAllOrderByAdmin,
+  getSingleOrderById,
 } from "../controllers/order.controller.js";
 
 const router = Router();
@@ -16,5 +17,6 @@ router.route("/create-order").post(createOrder);
 router.route("/update-payment/:orderId").post(updatedPayment);
 router.route("/get-user-order").get(getOrdersForSpecificUser);
 router.route("/get-order-by-admin").get(getAllOrderByAdmin);
+router.route("/get-single-order/:orderId").get(getSingleOrderById);
 
 export default router;

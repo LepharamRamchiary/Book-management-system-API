@@ -120,10 +120,9 @@ const getAllOrderByAdmin = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Admin only access this route");
   }
 
-  const orders = await Order.find().populate(
-    "books.book",
-    "title genre author isbn"
-  );
+  const orders = await Order.find()
+    .populate("user", "fullname username email")
+    .populate("books.book", "title genre author isbn");
 
   const count = await Order.countDocuments();
 
@@ -137,4 +136,37 @@ const getAllOrderByAdmin = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, resData, "Orders fetched successfully"));
 });
 
-export { createOrder, updatedPayment, getOrdersForSpecificUser, getAllOrderByAdmin };
+const getSingleOrderById = asyncHandler(async (req, res) => {
+  const orderId = req.params.orderId;
+  
+
+  const order = await Order.findById(orderId)
+    .populate("user", "fullname username email")
+    .populate("books.book", "title genre author isbn");
+
+//   console.log("order id", orderId);
+//   console.log("order", order);
+//   console.log("user id", req.user._id);
+//   console.log("order user id", order.user._id);
+//   console.log("is admin", req.user.isAdmin);
+
+  if (!order) {
+    throw new ApiError(404, "Order not found");
+  }
+
+  if (!req.user.isAdmin && order.user._id.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "Unauthorized to view this order");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, order, "Order fetched successfully"));
+});
+
+export {
+  createOrder,
+  updatedPayment,
+  getOrdersForSpecificUser,
+  getAllOrderByAdmin,
+  getSingleOrderById,
+};
