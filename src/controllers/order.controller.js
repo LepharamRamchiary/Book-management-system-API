@@ -8,7 +8,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 const createOrder = asyncHandler(async (req, res) => {
   try {
-    const { books, paymentMethod, deliveryAddress } = req.body;
+    const { books, deliveryAddress } = req.body;
     const userId = req.user._id;
 
     if (!books || books.length === 0) {
@@ -32,23 +32,56 @@ const createOrder = asyncHandler(async (req, res) => {
       })
     );
 
-    const isPaid = paymentMethod === "Cash on Delivery" ? false : true;
-
     const order = await Order.create({
       user: userId,
       books: orderBooks,
       totalPrice,
-      paymentMethod,
       deliveryAddress,
-      isPaid,
     });
 
     return res
       .status(201)
       .json(new ApiResponse(201, order, "Order created successfully"));
   } catch (error) {
-    throw new ApiError(400, error?.message, "Failed to create order");
+    throw new ApiError(400, error?.message || "Failed to create order");
   }
 });
 
-export { createOrder };
+const updatedPayment = asyncHandler(async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { paymentMethod } = req.body;
+
+    const validMethods = [
+      "Credit Card",
+      "Debit Card",
+      "PayPal",
+      "Cash on Delivery",
+    ];
+    if (!validMethods.includes(paymentMethod)) {
+      throw new ApiError(400, "Invalid payment method");
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+      throw new ApiError(400, "Invalid order ID");
+    }
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+      throw new ApiError(404, "Order not found");
+    }
+
+    order.paymentMethod = paymentMethod;
+    order.isPaid = paymentMethod === "Cash on Delivery" ? false : true;
+
+    await order.save();
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, order, "Payment update sucessfully"));
+  } catch (error) {
+    throw new ApiError(500, "Server Error");
+  }
+});
+
+export { createOrder, updatedPayment };
