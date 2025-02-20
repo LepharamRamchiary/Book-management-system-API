@@ -137,24 +137,26 @@ const getAllOrderByAdmin = asyncHandler(async (req, res) => {
 });
 
 const getSingleOrderById = asyncHandler(async (req, res) => {
-  const orderId = req.params.orderId;
-  
+  const { orderId } = req.params;
 
   const order = await Order.findById(orderId)
     .populate("user", "fullname username email")
     .populate("books.book", "title genre author isbn");
 
-//   console.log("order id", orderId);
-//   console.log("order", order);
-//   console.log("user id", req.user._id);
-//   console.log("order user id", order.user._id);
-//   console.log("is admin", req.user.isAdmin);
+  //   console.log("order id", orderId);
+  //   console.log("order", order);
+  //   console.log("user id", req.user._id);
+  //   console.log("order user id", order.user._id);
+  //   console.log("is admin", req.user.isAdmin);
 
   if (!order) {
     throw new ApiError(404, "Order not found");
   }
 
-  if (!req.user.isAdmin && order.user._id.toString() !== req.user._id.toString()) {
+  if (
+    !req.user.isAdmin &&
+    order.user._id.toString() !== req.user._id.toString()
+  ) {
     throw new ApiError(403, "Unauthorized to view this order");
   }
 
@@ -163,10 +165,34 @@ const getSingleOrderById = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, order, "Order fetched successfully"));
 });
 
+const updateStatus = asyncHandler(async (req, res) => {
+  const { orderId } = req.params;
+  const user = req.user;
+  const { status } = req.body;
+
+  if (!user.isAdmin) {
+    throw new ApiError(403, "Only Admin can access this route");
+  }
+
+  const order = await Order.findById(orderId);
+
+  if (!order) {
+    throw new ApiError(404, "Order not found");
+  }
+
+  order.status = status;
+  await order.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, order, "Status update successfully"));
+});
+
 export {
   createOrder,
   updatedPayment,
   getOrdersForSpecificUser,
   getAllOrderByAdmin,
   getSingleOrderById,
+  updateStatus,
 };
