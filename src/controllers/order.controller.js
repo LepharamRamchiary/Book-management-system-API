@@ -84,4 +84,23 @@ const updatedPayment = asyncHandler(async (req, res) => {
   }
 });
 
-export { createOrder, updatedPayment };
+const getOrdersForSpecificUser = asyncHandler(async (req, res) => {
+  const user = req.user;
+  const orders = await Order.find({ user: user }).populate(
+    "books.book",
+    "title price"
+  );
+
+  const count = await Order.countDocuments({ user: user});
+
+  const resData = {
+    orders,
+    total: count,
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, resData, "Orders fetched successfully"));
+});
+
+export { createOrder, updatedPayment, getOrdersForSpecificUser };
