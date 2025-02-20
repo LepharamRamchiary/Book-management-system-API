@@ -188,6 +188,21 @@ const updateStatus = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, order, "Status update successfully"));
 });
 
+const deleteOrderByAdmin = asyncHandler(async (req, res) => {
+  const user = req.user;
+  const { orderId } = req.params;
+
+  if (user.isAamin) {
+    throw new ApiError(403, "Only admin can access this route");
+  }
+
+  const orderDelete = await Order.findByIdAndDelete(orderId);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Order deleted successfully"));
+});
+
 export {
   createOrder,
   updatedPayment,
@@ -195,4 +210,5 @@ export {
   getAllOrderByAdmin,
   getSingleOrderById,
   updateStatus,
+  deleteOrderByAdmin
 };

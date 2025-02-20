@@ -6,7 +6,8 @@ import {
   getOrdersForSpecificUser,
   getAllOrderByAdmin,
   getSingleOrderById,
-  updateStatus
+  updateStatus,
+  deleteOrderByAdmin
 } from "../controllers/order.controller.js";
 
 const router = Router();
@@ -20,5 +21,6 @@ router.route("/get-user-order").get(getOrdersForSpecificUser);
 router.route("/get-order-by-admin").get(getAllOrderByAdmin);
 router.route("/get-single-order/:orderId").get(getSingleOrderById);
 router.route("/update-status/:orderId").post(updateStatus);
+router.route("/delete-order-by-admin/:orderId").delete(deleteOrderByAdmin);
 
 export default router;
