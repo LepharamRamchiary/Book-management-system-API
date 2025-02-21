@@ -247,6 +247,40 @@ const requestCancelOrder = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "OTP sent successfully"));
 });
 
+const cancelOrderWithOtp = asyncHandler(async (req, res) => {
+  const user = req.user;
+  const { orderId } = req.params;
+  const { otp } = req.body;
+
+  const order = await Order.findById(orderId);
+
+  if (!order) {
+    throw new ApiError(404, "Order not found");
+  }
+
+  if (order.user._id.toString() !== user._id.toString()) {
+    throw new ApiError(403, "You are not authorized to cancel this order");
+  }
+
+  if (!order.otp || !order.otpExpires || order.otpExpires < Date.now()) {
+    throw new ApiError(400, "OTP expired");
+  }
+
+  if (order.otp !== otp) {
+    throw new ApiError(400, "Invalid OTP");
+  }
+
+  // update status
+  order.status = "Cancelled";
+  order.otp = undefined;
+  order.otpExpires = undefined;
+  await order.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, order, "Order cancelled successfully"));
+});
+
 export {
   createOrder,
   updatedPayment,
@@ -256,4 +290,5 @@ export {
   updateStatus,
   deleteOrderByAdmin,
   requestCancelOrder,
+  cancelOrderWithOtp,
 };
