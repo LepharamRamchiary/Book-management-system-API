@@ -68,6 +68,12 @@ const orderSchema = new mongoose.Schema(
         required: true,
       },
     },
+    otp: {
+      type: String,
+    },
+    otpExpires: {
+      type: Date,
+    },
   },
   { timestamps: true }
 );
