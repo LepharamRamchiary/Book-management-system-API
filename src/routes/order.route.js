@@ -7,7 +7,8 @@ import {
   getAllOrderByAdmin,
   getSingleOrderById,
   updateStatus,
-  deleteOrderByAdmin
+  deleteOrderByAdmin,
+  requestCancelOrder
 } from "../controllers/order.controller.js";
 
 const router = Router();
@@ -22,5 +23,6 @@ router.route("/get-order-by-admin").get(getAllOrderByAdmin);
 router.route("/get-single-order/:orderId").get(getSingleOrderById);
 router.route("/update-status/:orderId").post(updateStatus);
 router.route("/delete-order-by-admin/:orderId").delete(deleteOrderByAdmin);
+router.route("/request-otp/:orderId").post(requestCancelOrder);
 
 export default router;
