@@ -80,6 +80,7 @@ const registerUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, createdUser, "User registered successfully"));
 });
 
+
 const login = asyncHandler(async (req, res) => {
   const { username, password } = req.body;
 
@@ -104,9 +105,10 @@ const login = asyncHandler(async (req, res) => {
   const loggedInUser = await User.findById(user._id).select(
     "-password -refreshToken"
   );
+
   const options = {
     httpOnly: true,
-    secure: true,
+    secure: true, 
   };
 
   return res
@@ -116,18 +118,25 @@ const login = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(
         200,
-        { user: loggedInUser, refreshToken, accessToken },
-        "User logged In Successfully"
+        {
+          user: loggedInUser,
+          accessToken,
+          refreshToken,
+        },
+        "User logged in successfully"
       )
     );
 });
 
 const logout = asyncHandler(async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ message: "User not authenticated" });
+  }
   await User.findByIdAndUpdate(
     req.user._id,
     {
       $set: {
-        refreshToken: 1,
+        refreshToken: undefined,
       },
     },
     {
@@ -142,8 +151,8 @@ const logout = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .cookie("accessToken", options)
-    .cookie("refreshToken", options)
+    .cookie("accessToken", "", options)
+    .cookie("refreshToken", "", options)
     .json(new ApiResponse(200, {}, "User logged out successfully"));
 });
 
