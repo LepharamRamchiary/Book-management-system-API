@@ -80,7 +80,6 @@ const registerUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, createdUser, "User registered successfully"));
 });
 
-
 const login = asyncHandler(async (req, res) => {
   const { username, password } = req.body;
 
@@ -108,7 +107,7 @@ const login = asyncHandler(async (req, res) => {
 
   const options = {
     httpOnly: true,
-    secure: true, 
+    secure: true,
   };
 
   return res
@@ -243,7 +242,13 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
 // Reset Password
 const resetPassword = asyncHandler(async (req, res) => {
+  // console.log("Reset Token:", req.params.token); 
+  // console.log("Request Body:", req.body);
+
   const { token } = req.params;
+
+  // console.log(token);
+  
 
   // console.log(token);
 
