@@ -239,10 +239,11 @@ import { verifyJWT } from "../middlewares/auth.middleware.js";
 const router = Router();
 
 // Applying verifyJwt for all routes
-router.use(verifyJWT);
+// router.use(verifyJWT);
 
 // Sensitive routes with stricter rate limits
 router.route("/add-book").post(
+  verifyJWT,
   strictLimiter,
   upload.fields([
     {
@@ -254,6 +255,7 @@ router.route("/add-book").post(
 );
 
 router.route("/update/:id").put(
+  verifyJWT,
   strictLimiter,
   upload.fields([
     {
@@ -263,7 +265,7 @@ router.route("/update/:id").put(
   ]),
   updateBook
 );
-router.route("/delete/:id").delete(strictLimiter, deleteBook);
+router.route("/delete/:id").delete(verifyJWT, strictLimiter, deleteBook);
 
 // Public or less-sensitive routes
 router.route("/get-all-book").get(apiLimiter, getAllBooks);
